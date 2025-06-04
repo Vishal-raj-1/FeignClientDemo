@@ -1,5 +1,6 @@
 package com.vishalrajput.service1.controller;
 
+import com.vishalrajput.service1.client.DeadServiceClient;
 import com.vishalrajput.service1.client.Service2Client;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,9 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/service1/api/")
 public class DemoController {
     private final Service2Client service2Client;
+    private final DeadServiceClient deadServiceClient;
 
-    @GetMapping("/demo")
-    public ResponseEntity<String> demo(@RequestParam(defaultValue = "3000") int delayMs) {
+    @GetMapping("/readTimeout")
+    public ResponseEntity<String> readTimeout(@RequestParam(defaultValue = "3000") int delayMs) {
         long start = System.currentTimeMillis();
         try{
             String response = service2Client.getDelayedResponse(delayMs);
@@ -25,6 +27,19 @@ public class DemoController {
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
                     .body("Request failed or timed out: " + ex.getMessage());
+        }
+    }
+
+    @GetMapping("/connectTimeout")
+    public ResponseEntity<String> demoConnectTimeout() {
+        long start = System.currentTimeMillis();
+        try{
+            String response = deadServiceClient.callDeadService();
+            long duration = System.currentTimeMillis() - start;
+            return ResponseEntity.ok("Success in " + duration + "ms: " + response);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.REQUEST_TIMEOUT)
+                    .body("Connection timeout: " + ex.getMessage());
         }
     }
 
